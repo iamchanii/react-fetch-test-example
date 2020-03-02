@@ -13,13 +13,13 @@ function App() {
   const [imageUrl, setImageUrl] = useState<string>();
 
   useEffect(() => {
-    async function getRandomCatFact() {
+    async function fetchRandomDogImage() {
       const response = await fetch(RANDOM_DOG_IMAGE_URL);
       const randomDogImage: RandomDogImage = await response.json();
       setImageUrl(randomDogImage.message);
     }
 
-    getRandomCatFact().then();
+    fetchRandomDogImage();
   }, []);
 
   return (
