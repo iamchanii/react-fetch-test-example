@@ -1,33 +1,45 @@
 import { render, waitForElement } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
-import App, { RANDOM_DOG_IMAGE_URL } from './App';
+import App, { RANDOM_DOG_IMAGE_URL, RandomDogImage } from './App';
 
-test('renders random toy poodle image', async () => {
+interface Dummy<T> {
+  create(): T;
+}
+
+class RandomDogImageDummy implements Dummy<RandomDogImage> {
+  create(): RandomDogImage {
+    return {
+      message: 'https://dog.jpg',
+      status: 'success',
+    };
+  }
+}
+
+function mockFetchRequest<T>(dummy: Dummy<T>) {
   let _resolve: any;
 
-  fetchMock.mockResponse(request => {
-    if (request.url === RANDOM_DOG_IMAGE_URL) {
-      return new Promise(resolve => {
+  fetchMock.mockResponse(
+    () =>
+      new Promise(resolve => {
         _resolve = resolve;
-      });
-    }
+      }),
+  );
 
-    return Promise.resolve('');
-  });
+  return (...args: any[]): T => {
+    const created = dummy.create();
+    _resolve(JSON.stringify(created));
+    expect(fetchMock).toHaveBeenLastCalledWith(...args);
 
+    return created;
+  };
+}
+
+test('renders random toy poodle image', async () => {
+  const assertFetch = mockFetchRequest(new RandomDogImageDummy());
   const { getByAltText } = render(<App />);
 
-  act(() => {
-    _resolve(
-      JSON.stringify({
-        message: 'https://dog.jpg',
-        result: 'success',
-      }),
-    );
-  });
+  const randomDogImage = assertFetch(RANDOM_DOG_IMAGE_URL);
 
   const toyPoodle = await waitForElement(() => getByAltText(/toy poodle/i));
-
-  expect(toyPoodle).toHaveAttribute('src', 'https://dog.jpg');
+  expect(toyPoodle).toHaveAttribute('src', randomDogImage.message);
 });

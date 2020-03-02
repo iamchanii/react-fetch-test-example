@@ -4,7 +4,7 @@ import './App.css';
 export const RANDOM_DOG_IMAGE_URL =
   'https://dog.ceo/api/breed/poodle/toy/images/random';
 
-interface RandomDogImage {
+export interface RandomDogImage {
   message: string;
   status: 'success';
 }
